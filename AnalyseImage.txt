@@ -1,35 +1,52 @@
-import os
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from azure.cognitiveservices.vision.computervision.models import ImageAnalysis
-from msrest.authentication import CognitiveServicesCredentials
+import com.microsoft.azure.functions.*;
 
-def analyze_image(image_url):
-    endpoint = "YOUR_COMPUTER_VISION_ENDPOINT"
-    subscription_key = "YOUR_COMPUTER_VISION_KEY"
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.objdetect.CascadeClassifier;
 
-    client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(subscription_key))
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-    # Analyse d'image
-    result = client.analyze_image(image_url, visual_features=['Categories', 'Description', 'Color'])
+public class ImageAnalysisFunction {
 
-    return result
+    private static final Logger LOGGER = Logger.getLogger(ImageAnalysisFunction.class.getName());
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    image_url = req.params.get('imageUrl')
-    if not image_url:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            image_url = req_body.get('imageUrl')
+    static {
+        System.loadLibrary(o…
+[17:16, 27/01/2024] +1 (507) 410-4508: faceDetector = new CascadeClassifier("haarcascade_frontalface_default.xml");
 
-    if image_url:
-        result = analyze_image(image_url)
-        # Traitez le résultat selon vos besoins
-        return func.HttpResponse(f"Analysis result: {result}")
-    else:
-        return func.HttpResponse(
-            "Please pass an imageUrl in the request",
-            status_code=400
-        )
+            // Convertir l'image en niveaux de gris pour une meilleure analyse
+            Mat grayImage = new Mat();
+            org.opencv.core.Core.cvtColor(image, grayImage, org.opencv.core.Core.COLOR_BGR2GRAY);
+
+            // Détection des visages dans l'image
+            MatOfRect faceDetections = new MatOfRect();
+            faceDetector.detectMultiScale(grayImage, faceDetections);
+
+            // Dessin des rectangles autour des visages détectés
+            Scalar color = new Scalar(0, 255, 0);
+            int thickness = 2;
+            for (Rect rect : faceDetections.toArray()) {
+                org.opencv.core.Core.rectangle(image, rect.tl(), rect.br(), color, thickness);
+            }
+
+            // Enregistrer l'image modifiée (avec les rectangles des visages détectés)
+            byte[] modifiedImageBytes = new byte[(int) (image.total() * image.elemSize())];
+            image.get(0, 0, modifiedImageBytes);
+
+            // Retourner l'image modifiée dans la réponse HTTP
+            return request.createResponseBuilder(HttpStatus.OK).body(modifiedImageBytes).build();
+
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error analyzing image", e);
+            return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body("Error analyzing image").build();
+        }
+    }
+}
+```
