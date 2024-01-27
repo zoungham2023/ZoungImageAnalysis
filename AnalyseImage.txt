@@ -1,0 +1,35 @@
+import os
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+from azure.cognitiveservices.vision.computervision.models import ImageAnalysis
+from msrest.authentication import CognitiveServicesCredentials
+
+def analyze_image(image_url):
+    endpoint = "YOUR_COMPUTER_VISION_ENDPOINT"
+    subscription_key = "YOUR_COMPUTER_VISION_KEY"
+
+    client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(subscription_key))
+
+    # Analyse d'image
+    result = client.analyze_image(image_url, visual_features=['Categories', 'Description', 'Color'])
+
+    return result
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    image_url = req.params.get('imageUrl')
+    if not image_url:
+        try:
+            req_body = req.get_json()
+        except ValueError:
+            pass
+        else:
+            image_url = req_body.get('imageUrl')
+
+    if image_url:
+        result = analyze_image(image_url)
+        # Traitez le résultat selon vos besoins
+        return func.HttpResponse(f"Analysis result: {result}")
+    else:
+        return func.HttpResponse(
+            "Please pass an imageUrl in the request",
+            status_code=400
+        )
