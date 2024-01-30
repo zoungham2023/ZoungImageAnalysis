@@ -1,0 +1,45 @@
+To upload an image to Azure Blob Storage from a ReactJS web application, you will need to make use of the Azure Storage JavaScript SDK. The following is an example code snippet that demonstrates how to achieve this:
+
+```javascript
+import { BlobServiceClient } from "@azure/storage-blob";
+
+async function uploadImageToBlob(imageFile) {
+  // Create a connection string to your Azure Storage account
+  const connectionString = "YOUR_AZURE_STORAGE_CONNECTION_STRING";
+
+  // Create a container name for your images
+  const containerName = "images";
+
+  // Create a BlobServiceClient instance
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+
+  // Get a reference to the container
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+
+  // Create a unique name for the blob using a timestamp
+  const timestamp = new Date().getTime();
+  const blobName = ${timestamp}_${imageFile.name};
+
+  // Get a block blob client for the blob
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+  // Upload the image file to Azure Blob Storage
+  await blockBlobClient.uploadBrowserData(imageFile);
+
+  // Get the URL of the uploaded blob
+  const blobUrl = blockBlobClient.url;
+
+  // Return the blob URL for further use
+  return blobUrl;
+}
+
+// Usage example
+const handleImageUpload = async (event) => {
+  const imageFile = event.target.files[0];
+  const blobUrl = await uploadImageToBlob(imageFile);
+  console.log("Image uploaded to:", blobUrl);
+};
+
+// Render a file input element in your React component
+<input type="file" accept="image/*" onChange={handleImageUpload} />
+```

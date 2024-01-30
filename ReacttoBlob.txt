@@ -1,0 +1,52 @@
+```javascript
+import React, { useState } from 'react';
+import { BlobServiceClient } from '@azure/storage-blob';
+
+const UploadImage = () => {
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleImageUpload = async () => {
+    try {
+      // Create a connection string to your Azure Storage account
+      const connectionString = 'YOUR_AZURE_STORAGE_CONNECTION_STRING';
+      
+      // Create a unique name for the blob container
+      const containerName = 'images';
+
+      // Create a service client using the connection string
+      const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+      
+      // Get a reference to the container
+      const containerClient = blobServiceClient.getContainerClient(containerName);
+
+      // Get a reference to a block blob
+      const blobName = selectedImage.name;
+      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+      // Upload the selected image to the blob storage
+      await blockBlobClient.uploadData(selectedImage, {
+        blobHTTPHeaders: { blobContentType: selectedImage.type },
+      });
+
+      console.log('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading the image', error);
+    }
+  };
+
+  const handleImageChange = (event) => {
+    setSelectedImage(event.target.files[0]);
+  };
+
+  return (
+    <>
+      <input type="file" accept="image/*" onChange={handleImageChange} />
+      <button onClick={handleImageUpload}>Upload</button>
+    </>
+  );
+};
+
+export default UploadImage;
+```
+
+
